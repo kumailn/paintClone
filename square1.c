@@ -12,6 +12,9 @@ enum State {Line, Point, Square, Circle};
 enum State currentState; 
 
 int mousePressed = 0;
+int windowWidth=800,windowHeight=800;
+int mouseX1=0,mouseY1=0,mouseX2,mouseY2;
+
 
 void createLine(){
 	glLineWidth(2.5); 
@@ -20,15 +23,6 @@ void createLine(){
 	glVertex3f(3.0, 0.0, 0.0);
 	glVertex3f(15, 3, 0);
 	glEnd();
-}
-
-void drawPoint(int x, int y){
-	printf("pointing");
-	glPointSize(2);
-	glBegin(GL_POINTS);
-	glVertex2f(50 , 22);
-	glEnd();
-
 }
 
 void axis(int size){
@@ -53,18 +47,60 @@ void axis(int size){
 	r++;
 }	
 
+void drawPoint(int x, int y){
+	printf("drawing point %i %i \n", x, y);
+	glPointSize(5);
+	glBegin(GL_POINTS);
+	glVertex2i(x , y);
+	glEnd();
+	glutSwapBuffers();
+}
+
+void drawLine(int x1,int x2, int y1, int y2){
+	if (x2 < x1) {  // Line needs to be drawn in reverse 
+		printf("Reverse");
+		return drawLine(x2, y2, x1, y1); 
+	}
+	int dx = x2 - x1;
+	int dy = y2 - y1;
+	int d = 2*dy - dx;
+	float incrE = dy*2;
+	float incrNE = 2*dy - 2*dx;
+	int x = x1;
+	int y = y1;
+	drawPoint(x, y);
+	while (x < x2) {
+		if (d <= 0) {  
+			d += incrE;
+			x++;
+			if (y2 <= y1) y--;
+		} else {
+			d += incrNE;
+			x++;
+			y++; 
+		} 
+		drawPoint(x, y);	
+	}
+}
+
 /* display function - GLUT display callback function
  *		clears the screen, draws a square, and displays it
  */
 void display(void)
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// Draw axis
-	axis(10);
+		//glOrtho(0.0f, 800, 800, 0.0f, 0.0f, 1.0f);
+
+	//axis(100);
+	//drawPoint(200, 200);
 	glPointSize(2);
 	glBegin(GL_POINTS);
 	glVertex2f(0 , 0);
+	//drawLine(1, 1, 30, 30);
 	glEnd();
+	glutSwapBuffers();
+
 	// Translate the Square	
 
 /* 	glRotatef(40, 0, 0, 1);
@@ -78,10 +114,15 @@ void display(void)
 	glFlush(); */
 }
 
+
 void mouseClick(int btn, int state, int x, int y){
+	//float mouseX = (x / 150) - 0.5f;
+	//float mouseY = (y / 150) - 0.5f;
+	static int moveX1=0,moveY1=0;
 	if(btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
 		printf("Dragging %i, %i \n", x, y);
 		mousePressed = 1;
+
 	}
 	else if(btn == GLUT_LEFT_BUTTON){
 		printf("left button, %i, %i\n", x, y);
@@ -93,7 +134,7 @@ void mouseClick(int btn, int state, int x, int y){
 		}
 		else if(currentState == Point){
 			drawPoint(x, y);
-			display();
+			glutSwapBuffers();
 		}
 	}
 	else if(btn == GLUT_LEFT_BUTTON && state == GLUT_UP){
@@ -173,14 +214,17 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv);		//starts up GLUT
 	glutCreateWindow("Paint Clone");	//creates the window
 	glutDisplayFunc(display);	//registers "display" as the display callback function
+	glutInitDisplayMode(GLUT_DOUBLE);
+	glutReshapeWindow(800, 800);
 	createGLUTMenus();
-
 	glutMotionFunc(mouseMotion);
 	glutMouseFunc(mouseClick);
 	//glutTimerFunc(0, FPS, 0);
 	//glutIdleFunc(idle);
-	glutReshapeFunc(reshape);
-	gluOrtho2D(-10, 10, -10, 10);
+	glMatrixMode(GL_PROJECTION);
+	//glutReshapeFunc(reshape);
+	glOrtho(0.0f, 800, 800, 0.0f, 0.0f, 1.0f);
+	//gluOrtho2D(-10, 10, -10, 10);
 	glutMainLoop();				//starts the event loop
 	return(0);					//return may not be necessary on all compilers
 }
