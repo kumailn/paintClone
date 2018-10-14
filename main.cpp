@@ -9,36 +9,43 @@ int r = 0;
 #define RED 1;
 
 enum State {Line, Point, Square, Circle};
-enum State currentState; 
+int currentState = Point; 
+
+int CURRENT_COLOR = 0;
 
 int mousePressed = 0;
 int windowWidth=800,windowHeight=800;
 int mouseX1=0,mouseY1=0,mouseX2,mouseY2;
+int windowID;
 
 //Structs for each type of shape
-struct Pointt {
+struct PointShape {
    double x, y; 
 };
 
-struct Line {
+struct LineShape {
    double x1, y1, x2, y2; 
 };
 
-struct Square {
+struct SquareShape {
 	double x1, y1, x2, y2, x3, y3, x4, y4;
-}
+};
+
+PointShape lineInitial;
+PointShape lineEnd;
 
 //Arrays to hold all shape positions, along with a counter for their length
-Pointt points[100];
+PointShape points[10000];
 int numberOfPoints = 0;
 
-Line lines[100];
+PointShape linePoints[10000];
+int numberOfLinePoints = 0;
+
+LineShape lines[100];
 int numberOfLines = 0;
 
-Square squares[100];
+SquareShape squares[100];
 int numberOfSquares = 0;
-
-
 
 
 
@@ -75,24 +82,29 @@ void axis(int size){
 
 void drawPoint(int x, int y){
 	printf("drawing point %i %i \n", x, y);
-	glPointSize(5);
+	glPointSize(1);
+	if (CURRENT_COLOR == 0) glColor3f(1.0, 1.0, 1.0);
+	if (CURRENT_COLOR == 1) glColor3f(1.0, 0.0, 0.0);
+	if (CURRENT_COLOR == 2) glColor3f(1.0, 1.0, 0.0);
+	if (CURRENT_COLOR == 3) glColor3f(1.0, 0.0, 1.0);
+	if (CURRENT_COLOR == 4) glColor3f(1.0, 1.0, 1.0);
+	if (CURRENT_COLOR == 5) glColor3f(0.0, 0.0, 1.0);
+
+
 	glBegin(GL_POINTS);
 	glVertex2i(x , y);
 	glEnd();
-	glutSwapBuffers();
+	//glutSwapBuffers();
 }
 
 void drawPoints(){
 	for(int i = 0; i < numberOfPoints; i++ ){
-		glPointSize(5);
-		glBegin(GL_POINTS);
-		glVertex2i(points[i].x , points[i].y);
-		glEnd();
+		drawPoint(points[i].x, points[i].y);
 	}
-	glutSwapBuffers();
+	//glutSwapBuffers();
 }
 
-void drawLine(int x1,int x2, int y1, int y2){
+void drawLine(int x1,int y1, int x2, int y2){
 	if (x2 < x1) {  // Line needs to be drawn in reverse 
 		printf("Reverse");
 		return drawLine(x2, y2, x1, y1); 
@@ -104,7 +116,10 @@ void drawLine(int x1,int x2, int y1, int y2){
 	float incrNE = 2*dy - 2*dx;
 	int x = x1;
 	int y = y1;
-	drawPoint(x, y);
+	linePoints[numberOfLinePoints].x = x;
+	linePoints[numberOfLinePoints].y = y;
+	numberOfLinePoints++;
+	//drawPoint(x, y);
 	while (x < x2) {
 		if (d <= 0) {  
 			d += incrE;
@@ -115,9 +130,40 @@ void drawLine(int x1,int x2, int y1, int y2){
 			x++;
 			y++; 
 		} 
-		drawPoint(x, y);	
+		linePoints[numberOfLinePoints].x = x;
+		linePoints[numberOfLinePoints].y = y;
+		numberOfLinePoints++;
+		//drawPoint(x, y);	
 	}
+	printf("line points %i \n", numberOfLinePoints);
 }
+
+void drawLines(){
+	printf("Drawing all lines...%i %i \n", numberOfLines, numberOfLinePoints);
+	for(int i = 0; i < numberOfLines; i ++){
+		drawLine(lines[i].x1, lines[i].y1, lines[i].x2, lines[i].y2);
+	}
+	for(int i = 0; i < numberOfLinePoints; i ++){
+		drawPoint(linePoints[i].x, linePoints[i].y);
+	}
+
+}
+
+void drawSquares(){
+
+}
+
+void drawCircles(){
+
+}
+
+void drawAllShapes(){
+	drawPoints();
+	drawLines();
+	drawSquares();
+	drawCircles();
+}
+
 
 /* display function - GLUT display callback function
  *		clears the screen, draws a square, and displays it
@@ -134,6 +180,7 @@ void display(void)
 	glPointSize(2);
 	glBegin(GL_POINTS);
 	glVertex2f(0 , 0);
+	drawAllShapes();
 	//drawLine(1, 1, 30, 30);
 	glEnd();
 	glutSwapBuffers();
@@ -157,26 +204,39 @@ void mouseClick(int btn, int state, int x, int y){
 	//float mouseY = (y / 150) - 0.5f;
 	static int moveX1=0,moveY1=0;
 	if(btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
-		printf("Dragging %i, %i \n", x, y);
+		printf("init click %i, %i \n", x, y);
 		mousePressed = 1;
-
+		lineInitial.x = x;
+		lineInitial.y = y;
 	}
-	else if(btn == GLUT_LEFT_BUTTON){
-		printf("left button, %i, %i\n", x, y);
+	else if(btn == GLUT_LEFT_BUTTON && mousePressed == 1){
+		printf("Mouse released, %i, %i\n", x, y);
 		if(currentState == Square){
 			printf("sup");
 		}
 		else if(currentState == Circle){
 			printf("circl");
 		}
+		else if(currentState == Line){
+			printf("line2321\n");
+			lines[numberOfLines].x1 = lineInitial.x;
+			lines[numberOfLines].y1 = lineInitial.y;
+			lines[numberOfLines].x2 = x;
+			lines[numberOfLines].y2 = y;
+			numberOfLines++;
+			display();
+			//glutSwapBuffers();
+		}
 		else if(currentState == Point){
 			points[numberOfPoints].x = x;
 			points[numberOfPoints].y = y;
 			numberOfPoints++;
-			drawPoints();
+			display();
+			//drawPoints();
 			//drawPoint(x, y);
-			glutSwapBuffers();
+			//glutSwapBuffers();
 		}
+		mousePressed = 0;
 	}
 	else if(btn == GLUT_LEFT_BUTTON && state == GLUT_UP){
 		mousePressed = 0;
@@ -206,7 +266,36 @@ void handleMenuClicks(int option) {
 			printf("Clicked circle \n");
 			currentState = Circle;
 			break;
+		case 5:
+			printf("Clear All \n");
+			//currentState = Circle;
+			memset(points, 0, sizeof(points));
+			numberOfPoints = 0;
+			memset(lines, 0, sizeof(lines));
+			numberOfLines = 0;
+			memset(linePoints, 0, sizeof(linePoints));
+			numberOfLinePoints = 0;
+			memset(squares, 0, sizeof(squares));
+			numberOfSquares = 0;
+			display();
+			break;
+		case 6:
+			glutDestroyWindow(windowID);
+			break;
 	}
+}
+
+void mouseMotion(int x, int y){
+	if (currentState != Point) return;
+	printf("2Dragging %i, %i \n", x, y);
+	points[numberOfPoints].x = x;
+	points[numberOfPoints].y = y;
+	numberOfPoints++;
+	display();
+}
+
+void handleColors(int option){
+	CURRENT_COLOR = option;
 }
 
 void createGLUTMenus() {
@@ -216,16 +305,28 @@ void createGLUTMenus() {
 	// create the menu and
 	// tell glut that "processMenuEvents" will
 	// handle the events
-	menu = glutCreateMenu(handleMenuClicks);
 
+	int colorMenu = glutCreateMenu(handleColors);
+	glutAddMenuEntry("Red", 1);
+	glutAddMenuEntry("Yellow", 2);
+	glutAddMenuEntry("Purple", 3);
+	glutAddMenuEntry("Blue", 5);
+	glutAddMenuEntry("White", 4);
+
+	menu = glutCreateMenu(handleMenuClicks);
 	//add entries to our menu
 	glutAddMenuEntry("Line",1);
 	glutAddMenuEntry("Square",2);
 	glutAddMenuEntry("Point",0);
 	glutAddMenuEntry("Rectangle",3);
 	glutAddMenuEntry("Circle",4);
+	glutAddSubMenu("Color", colorMenu);
+	glutAddMenuEntry("Clear All",5);
+	glutAddMenuEntry("Quit",6);
+
 	// attach the menu to the right button
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
+
 }
 
 void idle(void){
@@ -244,16 +345,12 @@ void reshape(int w, int h)
 	glutReshapeWindow( 300, 300);
 }
 
-void mouseMotion(int x, int y){
-	printf("2Dragging %i, %i \n", x, y);
-}
-
 
 /* main function - program entry point */
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);		//starts up GLUT
-	glutCreateWindow("Paint Clone");	//creates the window
+	windowID = glutCreateWindow("Paint Clone");	//creates the window
 	glutDisplayFunc(display);	//registers "display" as the display callback function
 	glutInitDisplayMode(GLUT_DOUBLE);
 	glutReshapeWindow(800, 800);
