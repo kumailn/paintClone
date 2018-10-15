@@ -129,8 +129,8 @@ void drawPoints(){
 }
 void drawLine(int x1, int y1, int x2, int y2)
 {
-  bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
-  if(steep)
+  bool up = (fabs(y2 - y1) > fabs(x2 - x1));
+  if(up)
   {
 	int temp = x1;
 	x1 = y1;
@@ -155,32 +155,29 @@ void drawLine(int x1, int y1, int x2, int y2)
   int dx = x2 - x1;
   int dy = fabs(y2 - y1);
   int e = dx / 2.0f;
-  int ystep = (y1 < y2) ? 1 : -1;
+  int yjump = (y1 < y2) ? 1 : -1;
   int y = (int)y1;
-  const int maxX = (int)x2;
-  for(int x=(int)x1; x<maxX; x++) {
-    if(steep) {
+  int maxX = (int) x2;
+  for(int x = (int) x1; x < maxX; x++) {
+    if(up) {
 	linePoints[numberOfLinePoints].x = y;
 	linePoints[numberOfLinePoints].y = x;
-	linePoints[numberOfLinePoints].color = CURRENT_COLOR;
 	numberOfLinePoints++;    }
     else {
 	linePoints[numberOfLinePoints].x = x;
 	linePoints[numberOfLinePoints].y = y;
-	linePoints[numberOfLinePoints].color = CURRENT_COLOR;
 	numberOfLinePoints++;    }
     e -= dy;
     if(e < 0)
     {
-        y += ystep;
+        y += yjump;
         e += dx;
     }
   }
 }
   
-
 void drawLines(){
-	printf("Drawing all lines...%i %i \n", numberOfLines, numberOfLinePoints);
+	//printf("Drawing all lines...%i %i \n", numberOfLines, numberOfLinePoints);
 	for(int i = 0; i < numberOfLines; i ++){
 		drawLine(lines[i].x1, lines[i].y1, lines[i].x2, lines[i].y2);
 	}
@@ -199,39 +196,40 @@ void circleHelper(int xc, int yc, int x, int y)
 
 	circlePoints[numberOfCirclePoints].x = xc-x;
 	circlePoints[numberOfCirclePoints].y = yc+y;
-	circlePoints[numberOfCirclePoints].y = yc+y;
+	circlePoints[numberOfCirclePoints].color = CURRENT_COLOR;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc+x;
 	circlePoints[numberOfCirclePoints].y = yc-y;
-	circlePoints[numberOfCirclePoints].y = yc+y;
+	circlePoints[numberOfCirclePoints].color = CURRENT_COLOR;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc-x;
 	circlePoints[numberOfCirclePoints].y = yc-y;
-	circlePoints[numberOfCirclePoints].y = yc+y;
+	circlePoints[numberOfCirclePoints].color = CURRENT_COLOR;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc+y;
 	circlePoints[numberOfCirclePoints].y = yc+x;
-	circlePoints[numberOfCirclePoints].y = yc+y;
+	circlePoints[numberOfCirclePoints].color = CURRENT_COLOR;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc-y;
 	circlePoints[numberOfCirclePoints].y = yc+x;
-	circlePoints[numberOfCirclePoints].y = yc+y;
+	circlePoints[numberOfCirclePoints].color = CURRENT_COLOR;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc+y;
 	circlePoints[numberOfCirclePoints].y = yc-x;
-	circlePoints[numberOfCirclePoints].y = yc+y;
+	circlePoints[numberOfCirclePoints].color = CURRENT_COLOR;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc-y;
 	circlePoints[numberOfCirclePoints].y = yc-x;
-	circlePoints[numberOfCirclePoints].y = yc+y;
+	circlePoints[numberOfCirclePoints].color = CURRENT_COLOR;
 	numberOfCirclePoints++;
 } 
+  
   
 
 void drawCircles(int xcenter, int yccenter, int r) { 
@@ -278,10 +276,10 @@ void display(void)
 //Handle drawing shpaes on mouse clicks
 void mouseClick(int btn, int state, int x, int y){
 	static int moveX1=0,moveY1=0;
-	printf("Mouse click# %i \n", mousePressed);
+	//printf("Mouse click# %i \n", mousePressed);
 	if (mousePressed == 2){
 		if (currentState == Line) {
-			printf("Second Click! drawing line");
+			//printf("Second Click! drawing line");
 			mousePressed = 0;
 			lines[numberOfLines].x1 = lineInitial.x;
 			lines[numberOfLines].y1 = lineInitial.y;
@@ -291,7 +289,7 @@ void mouseClick(int btn, int state, int x, int y){
 			display();
 			glutSwapBuffers();
 		} else if (currentState == Circle) {
-			printf("Drawing circle..............\n");
+			//printf("Drawing circle..............\n");
 			double radius = sqrt(pow(x - lineInitial.x, 2.0) + pow(y - lineInitial.y, 2.0));
 			mousePressed = 0;
 			drawCircles(lineInitial.x, lineInitial.y, radius);
@@ -300,7 +298,12 @@ void mouseClick(int btn, int state, int x, int y){
 		else if (currentState == Square) {
 			mousePressed = 0;
 			double distance = sqrt(pow(x - lineInitial.x, 2.0) + pow(y - lineInitial.y, 2.0));
-			lines[numberOfLines].x1 = lineInitial.x;
+			drawLine(lineInitial.x, lineInitial.y, lineInitial.x + distance, lineInitial.y);
+			drawLine(lineInitial.x, lineInitial.y, lineInitial.x, lineInitial.y + distance);
+			drawLine(lineInitial.x + distance, lineInitial.y + distance, lineInitial.x, lineInitial.y + distance);
+			drawLine(lineInitial.x + distance, lineInitial.y, lineInitial.x + distance, lineInitial.y + distance);
+
+/* 			lines[numberOfLines].x1 = lineInitial.x;
 			lines[numberOfLines].y1 = lineInitial.y;
 			lines[numberOfLines].x2 = lineInitial.x + distance;
 			lines[numberOfLines].y2 = lineInitial.y;
@@ -322,29 +325,29 @@ void mouseClick(int btn, int state, int x, int y){
 			lines[numberOfLines].y1 = lineInitial.y;
 			lines[numberOfLines].x2 = lineInitial.x + distance;
 			lines[numberOfLines].y2 = lineInitial.y + distance;
-			numberOfLines++;
+			numberOfLines++; */
 			//drawSquares(lineInitial.x, lineInitial.y, radius);
 			glutPostRedisplay();
 		} 
 	}
 	else if(btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
-		printf("init click %i, %i \n", x, y);
+		//printf("init click %i, %i \n", x, y);
 		mousePressed = 1;
 		lineInitial.x = x;
 		lineInitial.y = y;
 	}
 	else if(btn == GLUT_LEFT_BUTTON && mousePressed == 1){
-		printf("Mouse released, %i, %i\n", x, y);
+		//printf("Mouse released, %i, %i\n", x, y);
 		if(currentState == Square){
-			printf("sup");
+			//printf("sup");
 			mousePressed = 2;
 		}
 		else if(currentState == Circle){
-			printf("circl");
+			//printf("circl");
 			mousePressed = 2;
 		}
 		else if(currentState == Line){
-			printf("line2321\n");
+			//printf("line2321\n");
 			mousePressed = 2;
 		}
 		else if(currentState == Point){
@@ -368,32 +371,32 @@ void mouseClick(int btn, int state, int x, int y){
 void handleMenuClicks(int option) {
 	switch (option) {
 		case 0:
-			printf("Clicked point \n");
+			//printf("Clicked point \n");
 			currentState = Point;
 			break;
 		case 1:
-			printf("Clicked line \n");
+			//printf("Clicked line \n");
 			currentState = Line;
 			break;
 		case 2:
-			printf("Clicked square \n");
+			//printf("Clicked square \n");
 			currentState = Square;
 			printf("%d", currentState);
 			break;
 		case 3:
-			printf("Clicked rectangle \n");
+			//printf("Clicked rectangle \n");
 			//currentState = Rectangle;
 			break;
 		case 4:
-			printf("Clicked circle \n");
+			//printf("Clicked circle \n");
 			currentState = Circle;
 			break;
 		case 7:
-					printf("Clicked Radial \n");
+			//printf("Clicked Radial \n");
 			currentState = Radial;
 			break;
 		case 5:
-			printf("Clear All \n");
+			//printf("Clear All \n");
 			//currentState = Circle;
 			memset(points, 0, sizeof(points));
 			numberOfPoints = 0;
@@ -452,7 +455,7 @@ void mouseMotion(int x, int y){
 		display();
 	}
 	else{
-		printf("2Dragging %i, %i \n", x, y);
+		//printf("2Dragging %i, %i \n", x, y);
 		points[numberOfPoints].x = x;
 		points[numberOfPoints].y = y;
 		points[numberOfPoints].color = CURRENT_COLOR;
