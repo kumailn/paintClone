@@ -23,7 +23,8 @@ int oneClick = 0;
 
 //Structs for each type of shape
 struct PointShape {
-   double x, y; 
+   double x, y;
+   int color; 
 };
 
 struct LineShape {
@@ -43,6 +44,7 @@ struct ColorRGB {
 };
 
 ColorRGB randomColor;
+ColorRGB CURRENT_RBG_COLOR;
 
 PointShape lineInitial;
 PointShape lineEnd;
@@ -101,17 +103,18 @@ float randomfloat(float a, float b)
     return ((b - a) * ((float)rand() / RAND_MAX)) + a;
 }
 
-void drawPoint(int x, int y){
+void drawPoint(int x, int y, int col){
 	//printf("drawing point %i %i \n", x, y);
 	glPointSize(BRUSH_SIZE);
-	if (CURRENT_COLOR == 0) glColor3f(1.0, 1.0, 1.0);
-	if (CURRENT_COLOR == 1) glColor3f(1.0, 0.0, 0.0);
-	if (CURRENT_COLOR == 2) glColor3f(1.0, 1.0, 0.0);
-	if (CURRENT_COLOR == 3) glColor3f(1.0, 0.0, 1.0);
-	if (CURRENT_COLOR == 4) glColor3f(1.0, 1.0, 1.0);
-	if (CURRENT_COLOR == 5) glColor3f(0.0, 0.0, 1.0);
-	if (CURRENT_COLOR == 6) glColor3f(randomColor.r, randomColor.g, randomColor.b);
-	if (CURRENT_COLOR == 7) glColor3f(randomfloat(0.0, 1.0), randomfloat(0.0, 1.0), randomfloat(0.0, 1.0));
+	if (col == 0) {CURRENT_RBG_COLOR.r = 1.0; CURRENT_RBG_COLOR.g = 1.0; CURRENT_RBG_COLOR.b = 1.0;}
+	if (col == 1) {CURRENT_RBG_COLOR.r = 1.0; CURRENT_RBG_COLOR.g = 0.0; CURRENT_RBG_COLOR.b = 0.0;}
+	if (col == 2) {CURRENT_RBG_COLOR.r = 1.0; CURRENT_RBG_COLOR.g = 1.0; CURRENT_RBG_COLOR.b = 0.0;}
+	if (col == 3) {CURRENT_RBG_COLOR.r = 1.0; CURRENT_RBG_COLOR.g = 0.0; CURRENT_RBG_COLOR.b = 1.0;}
+	if (col == 4) {CURRENT_RBG_COLOR.r = 1.0; CURRENT_RBG_COLOR.g = 1.0; CURRENT_RBG_COLOR.b = 1.0;}
+	if (col == 5) {CURRENT_RBG_COLOR.r = 0.0; CURRENT_RBG_COLOR.g = 0.0; CURRENT_RBG_COLOR.b = 1.0;}
+	if (col == 6) {CURRENT_RBG_COLOR.r = randomColor.r; CURRENT_RBG_COLOR.g = randomColor.g; CURRENT_RBG_COLOR.b = randomColor.b;}
+	if (col == 7) {CURRENT_RBG_COLOR.r = randomfloat(0.0, 1.0); CURRENT_RBG_COLOR.g = randomfloat(0.0, 1.0); CURRENT_RBG_COLOR.b = randomfloat(0.0, 1.0);}
+	glColor3f(CURRENT_RBG_COLOR.r, CURRENT_RBG_COLOR.g, CURRENT_RBG_COLOR.b);
 	glBegin(GL_POINTS);
 	glVertex2i(x , y);
 	glEnd();
@@ -120,73 +123,13 @@ void drawPoint(int x, int y){
 
 void drawPoints(){
 	for(int i = 0; i < numberOfPoints; i++ ){
-		drawPoint(points[i].x, points[i].y);
+		drawPoint(points[i].x, points[i].y, points[i].color);
 	}
 	//glutSwapBuffers();
 }
-
-void drawLine2(int x1,int y1, int x2, int y2){
-	if (x2 < x1) {  // Line needs to be drawn in reverse 
-		printf("Reverse");
-		return drawLine2(x2, y2, x1, y1); 
-	}
-	int dx = x2 - x1;
-	int dy = y2 - y1;
-	int d = 2*dy - dx;
-	float incrE = dy*2;
-	float incrNE = 2*dy - 2*dx;
-	int x = x1;
-	int y = y1;
-	linePoints[numberOfLinePoints].x = x;
-	linePoints[numberOfLinePoints].y = y;
-	numberOfLinePoints++;
-	//drawPoint(x, y);
-	while (x < x2) {
-		if (d <= 0) {  
-			d += incrE;
-			x++;
-			if (y2 <= y1) y--;
-		} else {
-			d += incrNE;
-			x++;
-			y++; 
-		} 
-		linePoints[numberOfLinePoints].x = x;
-		linePoints[numberOfLinePoints].y = y;
-		numberOfLinePoints++;
-		//drawPoint(x, y);	
-	}
-	printf("line points %i \n", numberOfLinePoints);
-}
-
-void drawLine3(int x1, int y1, int x2, int y2) 
-{ 
-   int m_new = 2 * (y2 - y1); 
-   int slope_error_new = m_new - (x2 - x1); 
-   for (int x = x1, y = y1; x <= x2; x++) 
-   { 
-      //cout << "(" << x << "," << y << ")\n"; 
-	linePoints[numberOfLinePoints].x = x;
-	linePoints[numberOfLinePoints].y = y;
-	numberOfLinePoints++;
-
-  
-      // Add slope to increment angle formed 
-      slope_error_new += m_new; 
-  
-      // Slope error reached limit, time to 
-      // increment y and update slope error. 
-      if (slope_error_new >= 0) 
-      { 
-         y++; 
-         slope_error_new  -= 2 * (x2 - x1); 
-      } 
-   } 
-} 
-
 void drawLine(int x1, int y1, int x2, int y2)
 {
-  const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
+  bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
   if(steep)
   {
 	int temp = x1;
@@ -209,30 +152,28 @@ void drawLine(int x1, int y1, int x2, int y2)
 	y2 = temp2;
   }
  
-  const int dx = x2 - x1;
-  const int dy = fabs(y2 - y1);
-  int error = dx / 2.0f;
-  const int ystep = (y1 < y2) ? 1 : -1;
+  int dx = x2 - x1;
+  int dy = fabs(y2 - y1);
+  int e = dx / 2.0f;
+  int ystep = (y1 < y2) ? 1 : -1;
   int y = (int)y1;
   const int maxX = (int)x2;
-  for(int x=(int)x1; x<maxX; x++)
-  {
-    if(steep)
-    {
+  for(int x=(int)x1; x<maxX; x++) {
+    if(steep) {
 	linePoints[numberOfLinePoints].x = y;
 	linePoints[numberOfLinePoints].y = x;
+	linePoints[numberOfLinePoints].color = CURRENT_COLOR;
 	numberOfLinePoints++;    }
-    else
-    {
+    else {
 	linePoints[numberOfLinePoints].x = x;
 	linePoints[numberOfLinePoints].y = y;
+	linePoints[numberOfLinePoints].color = CURRENT_COLOR;
 	numberOfLinePoints++;    }
- 
-    error -= dy;
-    if(error < 0)
+    e -= dy;
+    if(e < 0)
     {
         y += ystep;
-        error += dx;
+        e += dx;
     }
   }
 }
@@ -244,12 +185,8 @@ void drawLines(){
 		drawLine(lines[i].x1, lines[i].y1, lines[i].x2, lines[i].y2);
 	}
 	for(int i = 0; i < numberOfLinePoints; i ++){
-		drawPoint(linePoints[i].x, linePoints[i].y);
+		drawPoint(linePoints[i].x, linePoints[i].y, linePoints[i].color);
 	}
-
-}
-
-void drawSquares(){
 
 }
 
@@ -257,120 +194,85 @@ void circleHelper(int xc, int yc, int x, int y)
 { 
 	circlePoints[numberOfCirclePoints].x = xc+x;
 	circlePoints[numberOfCirclePoints].y = yc+y;
+	circlePoints[numberOfCirclePoints].color = CURRENT_COLOR;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc-x;
+	circlePoints[numberOfCirclePoints].y = yc+y;
 	circlePoints[numberOfCirclePoints].y = yc+y;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc+x;
 	circlePoints[numberOfCirclePoints].y = yc-y;
+	circlePoints[numberOfCirclePoints].y = yc+y;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc-x;
 	circlePoints[numberOfCirclePoints].y = yc-y;
+	circlePoints[numberOfCirclePoints].y = yc+y;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc+y;
 	circlePoints[numberOfCirclePoints].y = yc+x;
+	circlePoints[numberOfCirclePoints].y = yc+y;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc-y;
 	circlePoints[numberOfCirclePoints].y = yc+x;
+	circlePoints[numberOfCirclePoints].y = yc+y;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc+y;
 	circlePoints[numberOfCirclePoints].y = yc-x;
+	circlePoints[numberOfCirclePoints].y = yc+y;
 	numberOfCirclePoints++;
 
 	circlePoints[numberOfCirclePoints].x = xc-y;
 	circlePoints[numberOfCirclePoints].y = yc-x;
+	circlePoints[numberOfCirclePoints].y = yc+y;
 	numberOfCirclePoints++;
-	
-    // drawPoint(xc+x, yc+y); 
-    // drawPoint(xc-x, yc+y); 
-    // drawPoint(xc+x, yc-y); 
-    // drawPoint(xc-x, yc-y); 
-    // drawPoint(xc+y, yc+x); 
-    // drawPoint(xc-y, yc+x); 
-    // drawPoint(xc+y, yc-x); 
-    // drawPoint(xc-y, yc-x); 
 } 
   
 
-void drawCircles(int xc, int yc, int r) 
-{ 
+void drawCircles(int xcenter, int yccenter, int r) { 
     int x = 0, y = r; 
     int d = 3 - 2 * r; 
     while (y >= x) 
     { 
-        // for each pixel we will 
-        // draw all eight pixels 
-        circleHelper(xc, yc, x, y); 
+        circleHelper(xcenter, yccenter, x, y); 
         x++; 
-  
-        // check for decision parameter 
-        // and correspondingly  
-        // update d, x, y 
         if (d > 0) 
         { 
             y--;  
             d = d + 4 * (x - y) + 10; 
         } 
-        else
-            d = d + 4 * x + 6; 
-        circleHelper(xc, yc, x, y); 
-        //delay(50); 
+        else d = d + 4 * x + 6; 
+        circleHelper(xcenter, yccenter, x, y); 
     } 
 } 
 
 void drawAllCircles(){
 	for(int i = 0; i < numberOfCirclePoints; i++){
-		drawPoint(circlePoints[i].x, circlePoints[i].y);
+		drawPoint(circlePoints[i].x, circlePoints[i].y, circlePoints[i].color);
 	}
 }
 
 void drawAllShapes(){
 	drawPoints();
 	drawLines();
-	drawSquares();
 	drawAllCircles();
-	//drawCircles();
 }
 
-
-/* display function - GLUT display callback function
- *		clears the screen, draws a square, and displays it
- */
 void display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	// Draw axis
-		//glOrtho(0.0f, 800, 800, 0.0f, 0.0f, 1.0f);
-
-	//axis(100);
-	drawPoint(200, 200);
 	drawPoints();
 	glPointSize(2);
-	//drawCircles(400, 200, 100);
 	glBegin(GL_POINTS);
 	glVertex2f(0 , 0);
 	drawAllShapes();
-	//drawLine(1, 1, 30, 30);
 	glEnd();
 	glutSwapBuffers();
-
-	// Translate the Square	
-
-/* 	glRotatef(40, 0, 0, 1);
-	glScalef(5, 5, 1);
-	glBegin(GL_POLYGON);
-		glVertex2f(-0.5, -0.5);
-		glVertex2f(-0.5, 0.5);
-		glVertex2f(0.5, 0.5);
-		glVertex2f(0.5, -0.5);	
-	glEnd();
-	glFlush(); */
 }
 
 //Handle drawing shpaes on mouse clicks
@@ -448,6 +350,7 @@ void mouseClick(int btn, int state, int x, int y){
 		else if(currentState == Point){
 			points[numberOfPoints].x = x;
 			points[numberOfPoints].y = y;
+			points[numberOfPoints].color = CURRENT_COLOR;
 			numberOfPoints++;
 			display();
 			//drawPoints();
@@ -458,12 +361,6 @@ void mouseClick(int btn, int state, int x, int y){
 	}
 	else if(btn == GLUT_LEFT_BUTTON && state == GLUT_UP){
 		if (currentState == Line){
-			// lines[numberOfLines].x1 = lineInitial.x;
-			// lines[numberOfLines].y1 = lineInitial.y;
-			// lines[numberOfLines].x2 = x;
-			// lines[numberOfLines].y2 = y;
-			// numberOfLines++;
-			// display();
 		}
 	}
 }
@@ -534,48 +431,31 @@ void mouseMotion(int x, int y){
 
 			points[numberOfPoints].y = y;
 			points[numberOfPoints].x = x;
+			points[numberOfPoints].color = CURRENT_COLOR;
 			numberOfPoints++;
 
 			points[numberOfPoints].x = ny;
 			points[numberOfPoints].y = nx;
+			points[numberOfPoints].color = CURRENT_COLOR;
 			numberOfPoints++;
 
 			points[numberOfPoints].x = mx;
 			points[numberOfPoints].y = my;
+			points[numberOfPoints].color = CURRENT_COLOR;
 			numberOfPoints++;
 
 			points[numberOfPoints].x = ox;
 			points[numberOfPoints].y = oy;
+			points[numberOfPoints].color = CURRENT_COLOR;
 			numberOfPoints++;
-			// points[numberOfPoints].y = y - 400;
-			// points[numberOfPoints].x = x;
-			// numberOfPoints++;
-
-			// points[numberOfPoints].y = y - 400;
-			// points[numberOfPoints].x = x + 400;
-			// numberOfPoints++;
-
-
 		}
-
-
-		// points[numberOfPoints].y = y;
-		// points[numberOfPoints].x = x;
-		// numberOfPoints++;
-
-		// points[numberOfPoints].y = y;
-		// points[numberOfPoints].x = x;
-		// numberOfPoints++;
-
-		// points[numberOfPoints].y = y;
-		// points[numberOfPoints].x = x;
-		// numberOfPoints++;
 		display();
 	}
 	else{
 		printf("2Dragging %i, %i \n", x, y);
 		points[numberOfPoints].x = x;
 		points[numberOfPoints].y = y;
+		points[numberOfPoints].color = CURRENT_COLOR;
 		numberOfPoints++;
 		display();
 	}
@@ -641,24 +521,24 @@ void reshape(int w, int h)
 	glutReshapeWindow( 300, 300);
 }
 
-
-/* main function - program entry point */
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);		//starts up GLUT
-	windowID = glutCreateWindow("Paint Clone");	//creates the window
+	windowID = glutCreateWindow("Assignment 1: Paint Program");	//creates the window
 	glutDisplayFunc(display);	//registers "display" as the display callback function
 	glutInitDisplayMode(GLUT_DOUBLE);
 	glutReshapeWindow(800, 800);
 	createGLUTMenus();
+	CURRENT_RBG_COLOR.r = 1.0;
+	CURRENT_RBG_COLOR.g = 1.0;
+	CURRENT_RBG_COLOR.b = 1.0;
 	glutMotionFunc(mouseMotion);
 	glutMouseFunc(mouseClick);
-	//glutTimerFunc(0, FPS, 0);
-	//glutIdleFunc(idle);
 	glMatrixMode(GL_PROJECTION);
-	//glutReshapeFunc(reshape);
 	glOrtho(0.0f, 800, 800, 0.0f, 0.0f, 1.0f);
-	//gluOrtho2D(-10, 10, -10, 10);
+	printf("**********WELCOME TO PAINT**********\n");
+	printf("All commands are located within the right click menu.\n");
+	printf("Note: If a shape doesn't appear, try making another one.\n");
 	glutMainLoop();				//starts the event loop
 	return(0);					//return may not be necessary on all compilers
 }
