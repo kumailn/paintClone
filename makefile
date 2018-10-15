@@ -25,7 +25,10 @@ else
 endif
 
 #change the 't1' name to the name you want to call your application
-PROGRAM_NAME= t1
+PROGRAM_NAME= Paint
+
+paint: $(PROGRAM_NAME)
+	./$(PROGRAM_NAME)$(EXEEXT)
 
 #run target to compile and build, and then launch the executable
 run: $(PROGRAM_NAME)
